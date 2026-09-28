@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基本情報技術者試験 学習進捗管理</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f8fa;
+    --border: #e5e7eb;
+    --text: #1f2328;
+    --muted: #57606a;
+    --accent: #3b82d4;
+    --secondary: #7c5cd8;
+    --success: #1a7f37;
+    --success-bg: #dafbe1;
+    --warn: #9a6700;
+    --warn-bg: #fff8c5;
+    --danger: #cf222e;
+    --danger-bg: #ffebe9;
+    --phase1: #dbeafe;
+    --phase2: #ede9fe;
+    --phase3: #fef3c7;
+    --phase4: #dcfce7;
+    --phase5: #fce7f3;
+  }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--surface);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  header .exam-date {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .exam-date span.badge {
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── 全体進捗サマリー ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .summary-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+
+  .summary-card .val {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+
+  .summary-card .lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── 進捗バー ── */
+  .progress-bar-wrap { margin-top: 8px; }
+
+  .progress-bar-bg {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-bar-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── セクション・カード ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .section-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .phase-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .phase-1 { background: var(--phase1); color: #1d4ed8; }
+  .phase-2 { background: var(--phase2); color: #6d28d9; }
+  .phase-3 { background: var(--phase3); color: #92400e; }
+  .phase-4 { background: var(--phase4); color: #166534; }
+  .phase-5 { background: var(--phase5); color: #9d174d; }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .card + .card { margin-top: 12px; }
+
+  .toggle-icon { font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+  .collapsed .toggle-icon { transform: rotate(-90deg); }
+
+  .card-body { margin-top: 14px; }
+  .card-body.hidden { display: none; }
+
+  /* ── Weekテーブル ── */
+  .week-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .week-block:last-child { margin-bottom: 0; }
+
+  .week-header {
+    background: var(--surface);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .week-title { font-weight: 700; font-size: 13px; }
+  .week-period { font-size: 11px; color: var(--muted); }
+  .week-goal {
+    margin-left: auto;
+    font-size: 11px;
+    background: var(--warn-bg);
+    color: var(--warn);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .week-content {
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  @media (max-width: 600px) {
+    .week-content { grid-template-columns: 1fr; }
+  }
+
+  .week-col h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  /* ── チェックリスト ── */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .checklist li input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .checklist li label {
+    cursor: pointer;
+    line-height: 1.4;
+  }
+
+  .checklist li.done label {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  /* ── Udemy セクション表 ── */
+  .udemy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .udemy-table th {
+    background: var(--surface);
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .udemy-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .udemy-table tr:last-child td { border-bottom: none; }
+
+  .udemy-table tr.done-row td { color: var(--muted); }
+  .udemy-table tr.done-row td:first-child { text-decoration: line-through; }
+
+  .speed-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .speed-1x { background: #dbeafe; color: #1d4ed8; }
+  .speed-1h5x { background: #fef3c7; color: #92400e; }
+
+  .stars { color: #f59e0b; font-size: 12px; }
+
+  /* ── 日次記録 ── */
+  .daily-log {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .log-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 80px 80px 70px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+  }
+
+  @media (max-width: 640px) {
+    .log-row {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto auto;
+    }
+    .log-row .log-date { grid-column: 1 / -1; font-weight: 600; }
+  }
+
+  .log-row input[type="text"], .log-row input[type="number"], .log-row textarea {
+    font: inherit;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: 100%;
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .log-row input[type="number"] { text-align: right; }
+
+  .log-date { font-weight: 600; font-size: 12px; color: var(--muted); }
+
+  .btn {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn:hover { opacity: 0.8; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); }
+  .btn-success { background: var(--success-bg); color: var(--success); }
+
+  .add-log-form {
+    display: grid;
+    grid-template-columns: 130px 1fr 80px 80px 70px auto;
+    gap: 8px;
+    align-items: start;
+    padding: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+
+  @media (max-width: 700px) {
+    .add-log-form {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .add-log-form label { font-size: 11px; color: var(--muted); margin-bottom: 2px; display: block; }
+  .add-log-form .form-group { display: flex; flex-direction: column; }
+
+  .add-log-form input, .add-log-form textarea {
+    font: inherit;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+  }
+
+  .add-log-form textarea { resize: vertical; min-height: 52px; }
+
+  /* ── 正答率グラフ（SVG） ── */
+  .chart-area {
+    overflow-x: auto;
+  }
+
+  /* ── タブ ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .tab-btn {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 4px 4px 0 0;
+    transition: color 0.15s;
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── 弱点メモ ── */
+  .memo-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .memo-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+  }
+
+  .memo-item textarea {
+    flex: 1;
+    font: inherit;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    resize: vertical;
+    min-height: 36px;
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .memo-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+    align-self: flex-start;
+  }
+
+  .tag-algo { background: #dbeafe; color: #1d4ed8; }
+  .tag-sec { background: #fce7f3; color: #9d174d; }
+  .tag-data { background: #ede9fe; color: #6d28d9; }
+  .tag-morning { background: #dcfce7; color: #166534; }
+
+  /* ── フッター ── */
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding: 16px;
+    margin-top: 8px;
+  }
+
+  /* ── ユーティリティ ── */
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-4 { margin-top: 4px; }
+  .text-muted { color: var(--muted); }
+  .text-sm { font-size: 12px; }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .alert-info { background: #dbeafe; color: #1d4ed8; border-left: 3px solid #3b82f6; }
+  .alert-warn { background: var(--warn-bg); color: var(--warn); border-left: 3px solid #f59e0b; }
+
+  select {
+    font: inherit;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📘 基本情報技術者試験 学習進捗管理</h1>
+  </div>
+  <div class="exam-date">
+    <span>試験目標：</span>
+    <span class="badge" id="exam-date-badge">12月中旬</span>
+    <input type="date" id="exam-date-input" style="font:inherit;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:2px 6px;color:var(--text);background:var(--surface);" title="試験日を設定">
+    <span id="days-left" style="font-weight:700;color:var(--accent);"></span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── サマリー ── -->
+  <div class="summary-grid" id="summary-grid">
+    <div class="summary-card">
+      <div class="val" id="total-progress">0%</div>
+      <div class="lbl">全体進捗</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="total-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="val" id="udemy-progress">0%</div>
+      <div class="lbl">Udemy完了セクション</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="udemy-bar" style="width:0%;background:var(--secondary)"></div></div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="val" id="week-progress">0%</div>
+      <div class="lbl">週次タスク完了率</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="week-bar" style="width:0%;background:var(--success)"></div></div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="val" id="total-study-time">0分</div>
+      <div class="lbl">累計学習時間</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="time-bar" style="width:0%;background:#f59e0b"></div></div>
+        <div class="progress-bar-label"><span>目標：1,400分</span><span id="time-pct">0%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── タブ ── -->
+  <div class="card" style="padding-bottom:0">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('schedule')">📅 スケジュール</button>
+      <button class="tab-btn" onclick="switchTab('udemy')">🎬 Udemyトラッカー</button>
+      <button class="tab-btn" onclick="switchTab('daily')">📝 日次記録</button>
+      <button class="tab-btn" onclick="switchTab('score')">📊 正答率推移</button>
+      <button class="tab-btn" onclick="switchTab('memo')">💡 弱点メモ</button>
+    </div>
+
+    <!-- ══ スケジュールタブ ══ -->
+    <div class="tab-panel active" id="tab-schedule" style="padding-bottom:18px">
+
+      <!-- Phase 1 -->
+      <div class="card" style="border-color:var(--phase1)">
+        <div class="section-header" onclick="toggleCard('ph1')">
+          <h2><span class="phase-badge phase-1">Phase 1</span>基礎理論＆アルゴリズム入門</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="text-muted text-sm">9/30〜10/11</span>
+            <span class="toggle-icon" id="ph1-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body" id="ph1-body">
+          <div id="week-1" class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 1</span>
+              <span class="week-period">9/30〜10/4</span>
+              <span class="week-goal">目標：試験形式理解＋基礎理論定着</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist" id="cl-w1-udemy">
+                  <li><input type="checkbox" id="w1u1" onchange="saveCheck(this)"><label for="w1u1">セクション0（試験概要 6分）視聴完了</label></li>
+                  <li><input type="checkbox" id="w1u2" onchange="saveCheck(this)"><label for="w1u2">セクション1（データ型・数釈 16分）視聴完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist" id="cl-w1-text">
+                  <li><input type="checkbox" id="w1t1" onchange="saveCheck(this)"><label for="w1t1">教科書 序章 読了</label></li>
+                  <li><input type="checkbox" id="w1t2" onchange="saveCheck(this)"><label for="w1t2">教科書 第1〜2章 読了</label></li>
+                  <li><input type="checkbox" id="w1t3" onchange="saveCheck(this)"><label for="w1t3">出る順問題集 20問以上</label></li>
+                  <li><input type="checkbox" id="w1t4" onchange="saveCheck(this)"><label for="w1t4">学習時間 1.5h/日 達成</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div id="week-2" class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 2</span>
+              <span class="week-period">10/7〜10/11</span>
+              <span class="week-goal">目標正答率：40%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w2u1" onchange="saveCheck(this)"><label for="w2u1">セクション2（条件分岐 16分）視聴完了</label></li>
+                  <li><input type="checkbox" id="w2u2" onchange="saveCheck(this)"><label for="w2u2">セクション3（手続と関数 36分）視聴完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w2t1" onchange="saveCheck(this)"><label for="w2t1">教科書 第3章（アルゴリズム）精読完了</label></li>
+                  <li><input type="checkbox" id="w2t2" onchange="saveCheck(this)"><label for="w2t2">条件分岐・関数の実装パターン習得</label></li>
+                  <li><input type="checkbox" id="w2t3" onchange="saveCheck(this)"><label for="w2t3">出る順問題集 25問以上</label></li>
+                  <li><input type="checkbox" id="w2t4" onchange="saveCheck(this)"><label for="w2t4">目標正答率40%達成</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="card" style="border-color:var(--phase2);margin-top:12px">
+        <div class="section-header" onclick="toggleCard('ph2')">
+          <h2><span class="phase-badge phase-2">Phase 2</span>データ構造＆配列マスター</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="text-muted text-sm">10/14〜10/25</span>
+            <span class="toggle-icon" id="ph2-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body" id="ph2-body">
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 3</span>
+              <span class="week-period">10/14〜10/18</span>
+              <span class="week-goal">目標正答率：45%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w3u1" onchange="saveCheck(this)"><label for="w3u1">セクション4（繰り返し選択 24分）視聴完了</label></li>
+                  <li><input type="checkbox" id="w3u2" onchange="saveCheck(this)"><label for="w3u2">セクション5（配列 62分 前半）視聴完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w3t1" onchange="saveCheck(this)"><label for="w3t1">教科書 第4〜5章 読了</label></li>
+                  <li><input type="checkbox" id="w3t2" onchange="saveCheck(this)"><label for="w3t2">繰り返し＆配列の実装を完全習得</label></li>
+                  <li><input type="checkbox" id="w3t3" onchange="saveCheck(this)"><label for="w3t3">出る順問題集 25問以上</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 4</span>
+              <span class="week-period">10/21〜10/25</span>
+              <span class="week-goal">目標正答率：50%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w4u1" onchange="saveCheck(this)"><label for="w4u1">セクション5（配列 62分 後半）視聴完了</label></li>
+                  <li><input type="checkbox" id="w4u2" onchange="saveCheck(this)"><label for="w4u2">セクション6（二次元配列 62分）視聴完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w4t1" onchange="saveCheck(this)"><label for="w4t1">教科書 第6〜7章 読了</label></li>
+                  <li><input type="checkbox" id="w4t2" onchange="saveCheck(this)"><label for="w4t2">二次元配列・ソートの実装パターン習得</label></li>
+                  <li><input type="checkbox" id="w4t3" onchange="saveCheck(this)"><label for="w4t3">出る順問題集 25問以上</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="card" style="border-color:#fde68a;margin-top:12px">
+        <div class="section-header" onclick="toggleCard('ph3')">
+          <h2><span class="phase-badge phase-3">Phase 3</span>応用アルゴリズム＆技術系知識</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="text-muted text-sm">10/28〜11/8</span>
+            <span class="toggle-icon" id="ph3-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body" id="ph3-body">
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 5</span>
+              <span class="week-period">10/28〜11/1</span>
+              <span class="week-goal">目標正答率：55%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w5u1" onchange="saveCheck(this)"><label for="w5u1">セクション7（OOP 22分）視聴完了</label></li>
+                  <li><input type="checkbox" id="w5u2" onchange="saveCheck(this)"><label for="w5u2">セクション8（データ構造 33分）視聴完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w5t1" onchange="saveCheck(this)"><label for="w5t1">教科書 第8〜11章 読了</label></li>
+                  <li><input type="checkbox" id="w5t2" onchange="saveCheck(this)"><label for="w5t2">OOP＆グラフ・木構造の理解</label></li>
+                  <li><input type="checkbox" id="w5t3" onchange="saveCheck(this)"><label for="w5t3">出る順問題集 25問以上</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 6</span>
+              <span class="week-period">11/4〜11/8</span>
+              <span class="week-goal">目標：午前50%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w6u1" onchange="saveCheck(this)"><label for="w6u1">セクション9（ビット演算 19分）視聴完了</label></li>
+                  <li><input type="checkbox" id="w6u2" onchange="saveCheck(this)"><label for="w6u2">セクション14（セキュリティ対策 20分）視聴完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w6t1" onchange="saveCheck(this)"><label for="w6t1">教科書 第12〜15章 読了</label></li>
+                  <li><input type="checkbox" id="w6t2" onchange="saveCheck(this)"><label for="w6t2">ビット演算＆セキュリティ対策完成</label></li>
+                  <li><input type="checkbox" id="w6t3" onchange="saveCheck(this)"><label for="w6t3">出る順問題集・科目A 1周目完了</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="card" style="border-color:#bbf7d0;margin-top:12px">
+        <div class="section-header" onclick="toggleCard('ph4')">
+          <h2><span class="phase-badge phase-4">Phase 4</span>開発・マネジメント＋午前対策</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="text-muted text-sm">11/11〜11/22</span>
+            <span class="toggle-icon" id="ph4-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body" id="ph4-body">
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 7</span>
+              <span class="week-period">11/11〜11/15</span>
+              <span class="week-goal">目標：午前65%＋午後40%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>📚 教科書・問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w7t1" onchange="saveCheck(this)"><label for="w7t1">教科書 第16〜21章 読了</label></li>
+                  <li><input type="checkbox" id="w7t2" onchange="saveCheck(this)"><label for="w7t2">開発・PM・戦略系の概念理解</label></li>
+                  <li><input type="checkbox" id="w7t3" onchange="saveCheck(this)"><label for="w7t3">出る順問題集・科目A 2周目完了</label></li>
+                  <li><input type="checkbox" id="w7t4" onchange="saveCheck(this)"><label for="w7t4">出る順問題集・科目B 1周目開始</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>🎯 確認</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w7c1" onchange="saveCheck(this)"><label for="w7c1">午前模擬テスト50%以上達成</label></li>
+                  <li><input type="checkbox" id="w7c2" onchange="saveCheck(this)"><label for="w7c2">弱点分野の特定と対策</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 8</span>
+              <span class="week-period">11/18〜11/22</span>
+              <span class="week-goal">目標：午前75%以上＋午後45%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>📚 問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w8t1" onchange="saveCheck(this)"><label for="w8t1">教科書 全体の復習</label></li>
+                  <li><input type="checkbox" id="w8t2" onchange="saveCheck(this)"><label for="w8t2">出る順問題集・科目A 3周目完了</label></li>
+                  <li><input type="checkbox" id="w8t3" onchange="saveCheck(this)"><label for="w8t3">出る順問題集・科目B 1周目完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w8u1" onchange="saveCheck(this)"><label for="w8u1">セクション10（IPA令和4年12月）視聴開始</label></li>
+                  <li><input type="checkbox" id="w8c1" onchange="saveCheck(this)"><label for="w8c1">午前75%以上達成</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 5 -->
+      <div class="card" style="border-color:#fbcfe8;margin-top:12px">
+        <div class="section-header" onclick="toggleCard('ph5')">
+          <h2><span class="phase-badge phase-5">Phase 5</span>IPA公式問題演習＆最終対策</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="text-muted text-sm">11/25〜12/6</span>
+            <span class="toggle-icon" id="ph5-icon">▼</span>
+          </div>
+        </div>
+        <div class="card-body" id="ph5-body">
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 9</span>
+              <span class="week-period">11/25〜11/29</span>
+              <span class="week-goal">目標：午前80%以上＋午後55%以上</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy（IPA公式問題）</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w9u1" onchange="saveCheck(this)"><label for="w9u1">セクション10（IPA令和4年12月 40分）完了</label></li>
+                  <li><input type="checkbox" id="w9u2" onchange="saveCheck(this)"><label for="w9u2">セクション11（IPA令和5年7月 53分）完了</label></li>
+                  <li><input type="checkbox" id="w9u3" onchange="saveCheck(this)"><label for="w9u3">セクション13（プログラミング対策）完了</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>📚 問題集</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w9t1" onchange="saveCheck(this)"><label for="w9t1">科目B 2周目（時間計測）完了</label></li>
+                  <li><input type="checkbox" id="w9t2" onchange="saveCheck(this)"><label for="w9t2">時間配分を意識した演習</label></li>
+                  <li><input type="checkbox" id="w9c1" onchange="saveCheck(this)"><label for="w9c1">午後55%以上達成</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="week-block">
+            <div class="week-header">
+              <span class="week-title">Week 10</span>
+              <span class="week-period">12/2〜12/6</span>
+              <span class="week-goal">🎯 合格圏到達：午前85%＋午後65%</span>
+            </div>
+            <div class="week-content">
+              <div class="week-col">
+                <h4>🎬 Udemy</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w10u1" onchange="saveCheck(this)"><label for="w10u1">セクション12（IPA令和6年公開分 42分）完了</label></li>
+                  <li><input type="checkbox" id="w10u2" onchange="saveCheck(this)"><label for="w10u2">本番シミュレーション実施</label></li>
+                </ul>
+              </div>
+              <div class="week-col">
+                <h4>🎯 最終確認</h4>
+                <ul class="checklist">
+                  <li><input type="checkbox" id="w10t1" onchange="saveCheck(this)"><label for="w10t1">科目A・B 最終復習完了</label></li>
+                  <li><input type="checkbox" id="w10t2" onchange="saveCheck(this)"><label for="w10t2">教科書の付録「確認リスト」チェック</label></li>
+                  <li><input type="checkbox" id="w10t3" onchange="saveCheck(this)"><label for="w10t3">十分な睡眠・体調管理</label></li>
+                  <li><input type="checkbox" id="w10c1" onchange="saveCheck(this)"><label for="w10c1">🎉 合格圏達成！</label></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Udemyトラッカータブ ══ -->
+    <div class="tab-panel" id="tab-udemy" style="padding-bottom:18px">
+      <div class="alert alert-info">合計視聴時間：約450分（7.5時間）｜1.5倍速で約300分（5時間）</div>
+      <table class="udemy-table" id="udemy-section-table">
+        <thead>
+          <tr>
+            <th>セクション</th>
+            <th>内容</th>
+            <th>時間</th>
+            <th>推奨速度</th>
+            <th>優先度</th>
+            <th>活用週</th>
+            <th>完了</th>
+          </tr>
+        </thead>
+        <tbody id="udemy-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- ══ 日次記録タブ ══ -->
+    <div class="tab-panel" id="tab-daily" style="padding-bottom:18px">
+      <div class="add-log-form" id="add-log-form">
+        <div class="form-group">
+          <label>日付</label>
+          <input type="date" id="log-date">
+        </div>
+        <div class="form-group" style="grid-column:span 1">
+          <label>学習内容メモ</label>
+          <textarea id="log-note" placeholder="例）セクション3視聴、教科書第3章読了..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>科目A正答率%</label>
+          <input type="number" id="log-score-a" min="0" max="100" placeholder="—">
+        </div>
+        <div class="form-group">
+          <label>科目B正答率%</label>
+          <input type="number" id="log-score-b" min="0" max="100" placeholder="—">
+        </div>
+        <div class="form-group">
+          <label>学習時間(分)</label>
+          <input type="number" id="log-time" min="0" placeholder="0">
+        </div>
+        <div class="form-group" style="justify-content:flex-end;padding-top:18px">
+          <button class="btn btn-primary" onclick="addLog()">追加</button>
+        </div>
+      </div>
+      <div class="daily-log mt-8" id="daily-log-list"></div>
+    </div>
+
+    <!-- ══ 正答率推移タブ ══ -->
+    <div class="tab-panel" id="tab-score" style="padding-bottom:18px">
+      <div class="alert alert-warn">日次記録タブでスコアを入力すると、ここにグラフが自動表示されます。</div>
+      <div class="chart-area">
+        <svg id="score-chart" width="100%" viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="font-family:-apple-system,'Segoe UI',system-ui,sans-serif"></svg>
+      </div>
+    </div>
+
+    <!-- ══ 弱点メモタブ ══ -->
+    <div class="tab-panel" id="tab-memo" style="padding-bottom:18px">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <select id="memo-tag-select">
+          <option value="tag-algo">アルゴリズム</option>
+          <option value="tag-data">データ構造</option>
+          <option value="tag-sec">セキュリティ</option>
+          <option value="tag-morning">午前（科目A）</option>
+        </select>
+        <button class="btn btn-primary" onclick="addMemo()">＋ 弱点メモを追加</button>
+      </div>
+      <div class="memo-list" id="memo-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Made with IBM Bob</footer>
+
+<script>
+// ══ ストレージキー ══
+const KEY_CHECKS = 'fit_checks';
+const KEY_LOGS   = 'fit_logs';
+const KEY_MEMOS  = 'fit_memos';
+const KEY_UDEMY  = 'fit_udemy';
+const KEY_EXAM   = 'fit_exam_date';
+
+// ══ Udemyデータ ══
+const udemySections = [
+  { id:'u0',  title:'セクション0',  desc:'試験概要',               mins:6,  speed:'1倍',   priority:'⭐⭐⭐', week:'Week 1' },
+  { id:'u1',  title:'セクション1',  desc:'データ型・数釈',         mins:16, speed:'1.5倍', priority:'⭐⭐',   week:'Week 1' },
+  { id:'u2',  title:'セクション2',  desc:'条件分岐',               mins:16, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 2' },
+  { id:'u3',  title:'セクション3',  desc:'手続と関数',             mins:36, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 2' },
+  { id:'u4',  title:'セクション4',  desc:'繰り返し選択',           mins:24, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 3' },
+  { id:'u5',  title:'セクション5',  desc:'配列・二次元配列①',     mins:62, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 3〜4' },
+  { id:'u6',  title:'セクション6',  desc:'配列・二次元配列②',     mins:62, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 4' },
+  { id:'u7',  title:'セクション7',  desc:'オブジェクト指向',       mins:22, speed:'1.5倍', priority:'⭐⭐',   week:'Week 5' },
+  { id:'u8',  title:'セクション8',  desc:'データ構造（ツリー等）', mins:33, speed:'1.5倍', priority:'⭐⭐⭐', week:'Week 5' },
+  { id:'u9',  title:'セクション9',  desc:'ビット演算',             mins:19, speed:'1.5倍', priority:'⭐',    week:'Week 6' },
+  { id:'u10', title:'セクション10', desc:'IPA令和4年12月公開分',   mins:40, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 8〜9' },
+  { id:'u11', title:'セクション11', desc:'IPA令和5年7月公開分',    mins:53, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 9' },
+  { id:'u12', title:'セクション12', desc:'IPA令和6年公開分',       mins:42, speed:'1倍',   priority:'⭐⭐⭐', week:'Week 10' },
+  { id:'u13', title:'セクション13', desc:'プログラミング対策',     mins:null,speed:'1倍',  priority:'⭐⭐⭐', week:'Week 9' },
+  { id:'u14', title:'セクション14', desc:'セキュリティ分野対策',   mins:20, speed:'1.5倍', priority:'⭐⭐',   week:'Week 6' },
+];
+
+// ══ 初期化 ══
+document.addEventListener('DOMContentLoaded', () => {
+  loadChecks();
+  renderUdemyTable();
+  renderLogs();
+  renderMemos();
+  updateSummary();
+  updateScoreChart();
+  initExamDate();
+  // 今日の日付をデフォルト
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('log-date').value = today;
+});
+
+// ══ 試験日カウントダウン ══
+function initExamDate() {
+  const saved = localStorage.getItem(KEY_EXAM);
+  const input = document.getElementById('exam-date-input');
+  if (saved) input.value = saved;
+  input.addEventListener('change', () => {
+    localStorage.setItem(KEY_EXAM, input.value);
+    updateDaysLeft();
+  });
+  updateDaysLeft();
+}
+
+function updateDaysLeft() {
+  const input = document.getElementById('exam-date-input');
+  const badge = document.getElementById('exam-date-badge');
+  const daysEl = document.getElementById('days-left');
+  if (!input.value) { daysEl.textContent = ''; return; }
+  const diff = Math.ceil((new Date(input.value) - new Date()) / 86400000);
+  badge.textContent = input.value;
+  daysEl.textContent = diff >= 0 ? `あと ${diff} 日` : '試験日終了';
+  daysEl.style.color = diff <= 14 ? '#cf222e' : 'var(--accent)';
+}
+
+// ══ タブ ══
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const ids = ['schedule','udemy','daily','score','memo'];
+    b.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + id);
+  });
+  if (id === 'score') updateScoreChart();
+}
+
+// ══ カード開閉 ══
+function toggleCard(id) {
+  const body = document.getElementById(id + '-body');
+  const icon = document.getElementById(id + '-icon');
+  const card = body.closest('.card');
+  body.classList.toggle('hidden');
+  icon.style.transform = body.classList.contains('hidden') ? 'rotate(-90deg)' : '';
+}
+
+// ══ チェックボックス ══
+function saveCheck(cb) {
+  const checks = JSON.parse(localStorage.getItem(KEY_CHECKS) || '{}');
+  checks[cb.id] = cb.checked;
+  localStorage.setItem(KEY_CHECKS, JSON.stringify(checks));
+  // 親liのdoneクラス
+  const li = cb.closest('li');
+  if (li) li.classList.toggle('done', cb.checked);
+  updateSummary();
+}
+
+function loadChecks() {
+  const checks = JSON.parse(localStorage.getItem(KEY_CHECKS) || '{}');
+  Object.entries(checks).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.checked = val;
+      const li = el.closest('li');
+      if (li) li.classList.toggle('done', val);
+    }
+  });
+}
+
+// ══ サマリー計算 ══
+function updateSummary() {
+  // 週次チェック
+  const allCbs = document.querySelectorAll('#tab-schedule input[type="checkbox"]');
+  const doneCbs = Array.from(allCbs).filter(c => c.checked);
+  const weekPct = allCbs.length ? Math.round(doneCbs.length / allCbs.length * 100) : 0;
+  document.getElementById('week-progress').textContent = weekPct + '%';
+  document.getElementById('week-bar').style.width = weekPct + '%';
+
+  // Udemy
+  const udemyDone = JSON.parse(localStorage.getItem(KEY_UDEMY) || '{}');
+  const udTotal = udemySections.length;
+  const udDone = Object.values(udemyDone).filter(Boolean).length;
+  const udPct = Math.round(udDone / udTotal * 100);
+  document.getElementById('udemy-progress').textContent = udPct + '%';
+  document.getElementById('udemy-bar').style.width = udPct + '%';
+
+  // 累計学習時間
+  const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]');
+  const totalMins = logs.reduce((s, l) => s + (parseInt(l.time) || 0), 0);
+  document.getElementById('total-study-time').textContent = totalMins + '分';
+  const timePct = Math.min(100, Math.round(totalMins / 1400 * 100));
+  document.getElementById('time-bar').style.width = timePct + '%';
+  document.getElementById('time-pct').textContent = timePct + '%';
+
+  // 全体進捗（週次+Udemy+時間の平均）
+  const overall = Math.round((weekPct + udPct + timePct) / 3);
+  document.getElementById('total-progress').textContent = overall + '%';
+  document.getElementById('total-bar').style.width = overall + '%';
+}
+
+// ══ Udemyテーブル ══
+function renderUdemyTable() {
+  const done = JSON.parse(localStorage.getItem(KEY_UDEMY) || '{}');
+  const tbody = document.getElementById('udemy-tbody');
+  tbody.innerHTML = '';
+  udemySections.forEach(s => {
+    const checked = done[s.id] || false;
+    const speedCls = s.speed === '1倍' ? 'speed-1x' : 'speed-1h5x';
+    const tr = document.createElement('tr');
+    if (checked) tr.classList.add('done-row');
+    tr.innerHTML = `
+      <td>${s.title}</td>
+      <td>${s.desc}</td>
+      <td>${s.mins ? s.mins + '分' : '—'}</td>
+      <td><span class="speed-tag ${speedCls}">${s.speed}</span></td>
+      <td class="stars">${s.priority}</td>
+      <td>${s.week}</td>
+      <td style="text-align:center">
+        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleUdemy('${s.id}', this)"
+          style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleUdemy(id, cb) {
+  const done = JSON.parse(localStorage.getItem(KEY_UDEMY) || '{}');
+  done[id] = cb.checked;
+  localStorage.setItem(KEY_UDEMY, JSON.stringify(done));
+  const tr = cb.closest('tr');
+  if (tr) tr.classList.toggle('done-row', cb.checked);
+  updateSummary();
+}
+
+// ══ 日次記録 ══
+function addLog() {
+  const date  = document.getElementById('log-date').value;
+  const note  = document.getElementById('log-note').value.trim();
+  const scoreA = document.getElementById('log-score-a').value;
+  const scoreB = document.getElementById('log-score-b').value;
+  const time  = document.getElementById('log-time').value;
+
+  if (!date) { alert('日付を入力してください'); return; }
+
+  const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]');
+  logs.push({ date, note, scoreA, scoreB, time, id: Date.now() });
+  logs.sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
+
+  document.getElementById('log-note').value = '';
+  document.getElementById('log-score-a').value = '';
+  document.getElementById('log-score-b').value = '';
+  document.getElementById('log-time').value = '';
+
+  renderLogs();
+  updateSummary();
+  updateScoreChart();
+}
+
+function renderLogs() {
+  const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]');
+  const list = document.getElementById('daily-log-list');
+  if (!logs.length) {
+    list.innerHTML = '<p class="text-muted text-sm" style="padding:12px">まだ記録がありません。上のフォームから追加してください。</p>';
+    return;
+  }
+  list.innerHTML = '';
+  [...logs].reverse().forEach(log => {
+    const div = document.createElement('div');
+    div.className = 'log-row';
+    div.innerHTML = `
+      <div class="log-date">${log.date}</div>
+      <div style="font-size:13px;color:var(--text)">${log.note || '<span style="color:var(--muted)">—</span>'}</div>
+      <div style="text-align:center">
+        <div style="font-size:10px;color:var(--muted)">科目A</div>
+        <div style="font-weight:700;color:var(--accent)">${log.scoreA ? log.scoreA + '%' : '—'}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;color:var(--muted)">科目B</div>
+        <div style="font-weight:700;color:var(--secondary)">${log.scoreB ? log.scoreB + '%' : '—'}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px;color:var(--muted)">時間</div>
+        <div style="font-weight:700">${log.time ? log.time + '分' : '—'}</div>
+      </div>
+      <button class="btn btn-danger" onclick="deleteLog(${log.id})" style="font-size:11px;padding:3px 8px">削除</button>`;
+    list.appendChild(div);
+  });
+}
+
+function deleteLog(id) {
+  let logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]');
+  logs = logs.filter(l => l.id !== id);
+  localStorage.setItem(KEY_LOGS, JSON.stringify(logs));
+  renderLogs();
+  updateSummary();
+  updateScoreChart();
+}
+
+// ══ 正答率グラフ（SVG） ══
+function updateScoreChart() {
+  const logs = JSON.parse(localStorage.getItem(KEY_LOGS) || '[]')
+    .filter(l => l.scoreA || l.scoreB);
+  const svg = document.getElementById('score-chart');
+  const W = 700, H = 260, PL = 50, PR = 20, PT = 20, PB = 40;
+  const cW = W - PL - PR, cH = H - PT - PB;
+
+  if (!logs.length) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#57606a" font-size="13">日次記録にスコアを入力するとグラフが表示されます</text>`;
+    return;
+  }
+
+  const targets = [
+    { week:'Week 2', a:40, b:null },
+    { week:'Week 3', a:null, b:45 },
+    { week:'Week 4', a:null, b:50 },
+    { week:'Week 5', a:null, b:55 },
+    { week:'Week 6', a:50, b:null },
+    { week:'Week 7', a:65, b:40 },
+    { week:'Week 8', a:75, b:45 },
+    { week:'Week 9', a:80, b:55 },
+    { week:'Week 10', a:85, b:65 },
+  ];
+
+  const n = logs.length;
+  const xStep = n > 1 ? cW / (n - 1) : cW;
+
+  function px(i) { return PL + (n > 1 ? i * xStep : cW / 2); }
+  function py(v) { return PT + cH - (v / 100) * cH; }
+
+  let html = '';
+
+  // グリッド・Y軸ラベル
+  for (let v = 0; v <= 100; v += 20) {
+    const y = py(v);
+    html += `<line x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+    html += `<text x="${PL - 6}" y="${y + 4}" text-anchor="end" fill="#57606a" font-size="11">${v}%</text>`;
+  }
+
+  // 合格ライン（60%）
+  html += `<line x1="${PL}" y1="${py(60)}" x2="${W - PR}" y2="${py(60)}" stroke="#1a7f37" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  html += `<text x="${W - PR + 4}" y="${py(60) + 4}" fill="#1a7f37" font-size="10">合格</text>`;
+
+  // 科目A折れ線
+  const aPoints = logs.map((l, i) => l.scoreA ? `${px(i)},${py(parseFloat(l.scoreA))}` : null).filter(Boolean);
+  const bPoints = logs.map((l, i) => l.scoreB ? `${px(i)},${py(parseFloat(l.scoreB))}` : null).filter(Boolean);
+
+  if (aPoints.length > 1) html += `<polyline points="${aPoints.join(' ')}" fill="none" stroke="#3b82d4" stroke-width="2.5" stroke-linejoin="round"/>`;
+  if (bPoints.length > 1) html += `<polyline points="${bPoints.join(' ')}" fill="none" stroke="#7c5cd8" stroke-width="2.5" stroke-linejoin="round"/>`;
+
+  // データポイント
+  logs.forEach((l, i) => {
+    if (l.scoreA) {
+      const cx = px(i), cy = py(parseFloat(l.scoreA));
+      html += `<circle cx="${cx}" cy="${cy}" r="5" fill="#3b82d4"/>`;
+      html += `<text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="#3b82d4" font-size="11" font-weight="600">${l.scoreA}%</text>`;
+    }
+    if (l.scoreB) {
+      const cx = px(i), cy = py(parseFloat(l.scoreB));
+      html += `<circle cx="${cx}" cy="${cy}" r="5" fill="#7c5cd8"/>`;
+      html += `<text x="${cx}" y="${cy + 18}" text-anchor="middle" fill="#7c5cd8" font-size="11" font-weight="600">${l.scoreB}%</text>`;
+    }
+    // X軸ラベル
+    const dateShort = l.date.slice(5); // MM-DD
+    html += `<text x="${px(i)}" y="${H - 6}" text-anchor="middle" fill="#57606a" font-size="10">${dateShort}</text>`;
+  });
+
+  // 凡例
+  html += `<circle cx="${PL + 10}" cy="14" r="5" fill="#3b82d4"/>`;
+  html += `<text x="${PL + 20}" y="18" fill="#3b82d4" font-size="12" font-weight="600">科目A（午前）</text>`;
+  html += `<circle cx="${PL + 120}" cy="14" r="5" fill="#7c5cd8"/>`;
+  html += `<text x="${PL + 130}" y="18" fill="#7c5cd8" font-size="12" font-weight="600">科目B（午後）</text>`;
+
+  svg.innerHTML = html;
+}
+
+// ══ 弱点メモ ══
+function addMemo() {
+  const tag = document.getElementById('memo-tag-select').value;
+  const memos = JSON.parse(localStorage.getItem(KEY_MEMOS) || '[]');
+  memos.push({ id: Date.now(), tag, text: '' });
+  localStorage.setItem(KEY_MEMOS, JSON.stringify(memos));
+  renderMemos();
+}
+
+function renderMemos() {
+  const memos = JSON.parse(localStorage.getItem(KEY_MEMOS) || '[]');
+  const list = document.getElementById('memo-list');
+  if (!memos.length) {
+    list.innerHTML = '<p class="text-muted text-sm" style="padding:12px">弱点・気づきをメモしておきましょう。</p>';
+    return;
+  }
+  const tagLabels = { 'tag-algo':'アルゴリズム', 'tag-data':'データ構造', 'tag-sec':'セキュリティ', 'tag-morning':'午前（科目A）' };
+  list.innerHTML = '';
+  memos.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'memo-item';
+    div.innerHTML = `
+      <span class="memo-tag ${m.tag}">${tagLabels[m.tag] || m.tag}</span>
+      <textarea placeholder="気づいた苦手パターン・ミスした実装など..." onblur="saveMemo(${m.id}, this.value)">${m.text}</textarea>
+      <button class="btn btn-danger" onclick="deleteMemo(${m.id})" style="font-size:11px;padding:3px 8px;align-self:flex-start">削除</button>`;
+    list.appendChild(div);
+  });
+}
+
+function saveMemo(id, text) {
+  const memos = JSON.parse(localStorage.getItem(KEY_MEMOS) || '[]');
+  const m = memos.find(x => x.id === id);
+  if (m) { m.text = text; localStorage.setItem(KEY_MEMOS, JSON.stringify(memos)); }
+}
+
+function deleteMemo(id) {
+  let memos = JSON.parse(localStorage.getItem(KEY_MEMOS) || '[]');
+  memos = memos.filter(m => m.id !== id);
+  localStorage.setItem(KEY_MEMOS, JSON.stringify(memos));
+  renderMemos();
+}
+</script>
+
+</body>
+</html>
